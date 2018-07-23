@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import CreateChar from './createChar.js';
+import CharacterTable from './components/CharacterTable/CharacterTable.js'
 import './App.css';
 
 class App extends Component {
@@ -18,7 +19,7 @@ class App extends Component {
   }
 
   componentDidUpdate() {
-    this.displayChar()
+
   }
 
   dndFetch = async (urlAppend, method, body) => {
@@ -36,12 +37,17 @@ class App extends Component {
     return await fetchedItem.json();  
   }
 
-  getChars = async () => {
-  const charsNames = await this.dndFetch ('characters', 'GET');
-  const charsObjects = await Promise.all(charsNames.map((charName) => this.getChar(charName)));
-  this.setState ({chars: charsObjects});
-  this.setState ({selectedChar: charsObjects[0]})
-  }
+  getChars = async (page = 0, allCharsNames = []) => {
+    const charsNames = await this.dndFetch (`characters?page=${page}`, 'GET');
+    if (charsNames.length !== 0) {
+      const recCharsNames = allCharsNames.concat(charsNames);
+      page++;
+      this.getChars(page, recCharsNames);
+    }
+    const charsObjects = await Promise.all(allCharsNames.map((charName) => this.getChar(charName)));
+    this.setState ({chars: charsObjects});
+    return allCharsNames;
+ }
 
   getChar = async (charName) => {
     const charObject = await this.dndFetch (`characters/${charName}`, 'GET');
@@ -56,19 +62,6 @@ class App extends Component {
     alert(response.contents[2].tag + " " + response.contents[2].contents);
     this.setState({attacker : response.contents[0], defender : response.contents[1]})
 
-  }
-
-  displayChar = (char) => {
-    const charKeys = Object.entries(this.state.selectedChar);
-    const tableCells = charKeys.map((element) => {
-      //use ternary
-      if (element[0] !== "attributes") {
-          return(<tr key={element[0]}><td>{element[0]}</td><td>{element[1]}</td></tr>);
-        } else {
-          return null;
-        }
-    });
-    return <table><tbody>{tableCells}</tbody></table>
   }
 
   removeChar = (charObject) => {
@@ -135,7 +128,7 @@ class App extends Component {
           </div>
         )
       })
-      return <div>{displayChars}</div>
+      return <div className="over box1">{displayChars}</div>
     }
   }
 
@@ -146,18 +139,27 @@ class App extends Component {
   render() {
     if (this.state.route === 'home') {
       return (
-      <div>
-        <h1>DnD App</h1>
-        <button onClick={() => this.setRoute('create')}>Create Character</button>
-        <div className ='container'>
-          <div>{this.charButtons()}</div>
-          <div>{this.displayChar(this.state.selectedChar)}</div>
+      <div className="topDiv">
+        <div className="header">
+          <h1>DnD App</h1>
         </div>
-        <div>{this.actionButton()}</div>
-        <div>{'Attacker is: ' + this.state.attacker.name + " / HP: " +this.state.attacker.hitPoints}</div>
-        <div>{'Defender is: ' + this.state.defender.name + " / HP: " +this.state.defender.hitPoints}</div>
-        <div>{this.resetButton()}</div>
-        <div>{this.fightButton()}</div>
+        <div className ='gridContainer'>
+          {this.charButtons()}
+          <CharacterTable className="box2" selectedChar={this.state.selectedChar} altText="Select a character" />       
+          <div className="box3">
+            <div>
+              {'Attacker is: ' + this.state.attacker.name + " / HP: " +this.state.attacker.hitPoints}
+            </div>
+            <div>
+              {'Defender is: ' + this.state.defender.name + " / HP: " +this.state.defender.hitPoints}
+            </div>
+          </div>
+          <div className="box4">
+            <div>{this.actionButton()}</div>
+            <div>{this.resetButton()}</div>
+            <div>{this.fightButton()}</div>
+          </div>  
+        </div>
       </div>
       )
     } else {

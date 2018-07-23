@@ -27,7 +27,7 @@ class CreateChar extends Component {
   }
 
   charClassRadioButtons = () => {
-  	const classes = ['Fighter', 'Magic User', 'Cleric', 'Theif', 'Paladin']
+  	const classes = ['Fighter', 'Magic User', 'Cleric', 'Thief', 'Paladin']
   	return classes.map(charClass => <label key={charClass}><input type="radio" name="charClass" value={charClass} />{charClass}</label>)
   }
 

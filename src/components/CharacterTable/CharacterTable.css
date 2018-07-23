@@ -1,0 +1,20 @@
+.card {
+    text-align: center; 
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    transition: 0.3s;
+    border-radius: 5px;
+    margin: 10px;
+    padding: 10px;
+    background-color: Tan;
+}
+
+h3 {
+	text-transform: capitalize;
+}
+
+table {
+	border: solid;
+	border-radius: 10px;
+	width: 100%;
+	text-overflow: wrap;
+}

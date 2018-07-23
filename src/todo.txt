@@ -2,3 +2,7 @@ remove attacker / defender from main list when selected
 
 add create character feature
 
+filter chars with 0 hp
+
+
+
