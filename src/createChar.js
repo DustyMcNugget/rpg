@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
+import './createChar.css';
 
 class CreateChar extends Component {
   constructor(props) {
@@ -40,6 +41,7 @@ class CreateChar extends Component {
   	event.preventDefault();
   	const putReq = JSON.stringify(this.state);
   	this.dndFetch('characters', 'PUT', putReq);
+    this.props.setRoute('home');
   }
 
   handleChange = (event) => {
@@ -51,17 +53,18 @@ class CreateChar extends Component {
 
   render() {
   	return (
-  		<div>
-        <h1>DnD App</h1>
-        <div>{'Create character'}</div>
-        <button onClick={() => this.props.setRoute('home')}>Home</button>
-        <form onSubmit={this.handleSubmit}>
-        	<label onChange={this.handleChange}>{'Name: '}<input type="text" name="name" /></label><br />
-        	<label onChange={this.handleChange}>{'Class: '}{this.charClassRadioButtons()}</label><br />
-        	<label onChange={this.handleChange}>{'Alignment: '}{this.alignmentRadioButtons()}</label><br />
-        	<button type='submit'>Create</button>
-        </form>
-      </div>
+      <form className="createCharGrid" onSubmit={this.handleSubmit}>
+        <div className="gridHead">
+        	<label className="labelFlex" onChange={this.handleChange}><input type="text" name="name" placeholder="Character name" /></label>
+        </div>
+        <div className="charClass">
+        	<label className="labelFlex" onChange={this.handleChange}>{this.charClassRadioButtons()}</label>
+        </div>
+        <div className="alignment">
+        	<label className="labelFlex" onChange={this.handleChange}>{this.alignmentRadioButtons()}</label>
+        </div>
+      	<button className="gridFoot" type='submit'>Create</button>
+      </form>
       )
   }
 }

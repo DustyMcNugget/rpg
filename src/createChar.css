@@ -1,0 +1,36 @@
+.createCharGrid {
+	display: grid;
+	width: 100%;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, auto);
+}
+
+.gridHead {
+	margin: 5px 0px 5px 0px;
+	grid-column: 1/3;
+	grid-row: 1/2;
+}
+
+.charClass {
+	margin: 5px 0px 5px 0px;
+	grid-column:1/2;
+	grid-row: 2/3;
+}
+
+.alignment {
+	margin: 5px 0px 5px 0px;
+	grid-column: 2/3;
+	grid-row: 2/3;
+}
+
+.gridFoot {
+	margin: 5px 0px 5px 0px;
+	grid-column: 1/3;
+}
+
+.labelFlex {
+	font-size: 0.85rem;
+	text-align: left;
+	display: flex;
+	flex-direction: column;
+}

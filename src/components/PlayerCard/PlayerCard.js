@@ -1,6 +1,7 @@
 import React from 'react';
+import Card from '.././Card/Card.js'
 import '../.././App.css';
-import './CharacterTable.css'
+import './PlayerCard.css'
 
 const PlayerCard = (props) => {
 	const text = (props.altText ? props.altText : "No player")
@@ -22,13 +23,9 @@ const PlayerCard = (props) => {
     	</tr>
     );
   })
+  const table = <table><tbody>{tableCells}</tbody></table>
   return (
-  	<div className="card">
-  		<h3>{name}</h3>
-  		<table>
-  			<tbody>{tableCells}</tbody>
-  		</table>
-  	</div>
+  	<Card header={name} content={table} />
 	)
 }
 export default PlayerCard;

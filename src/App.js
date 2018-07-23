@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import CreateChar from './createChar.js';
-import CharacterTable from './components/CharacterTable/CharacterTable.js'
+import PlayerCard from './components/PlayerCard/PlayerCard.js'
+import Card from './components/Card/Card.js'
+import characterTable from './components/characterTable'
 import './App.css';
 
 class App extends Component {
@@ -9,17 +11,14 @@ class App extends Component {
     this.state = {
       route: 'home',
       selectedChar: {},
-      attacker: {},
-      defender: {},
+      character1: {},
+      character2: {},
+      response: [],
     }
   }
 
   componentDidMount() {
     this.getChars();
-  }
-
-  componentDidUpdate() {
-
   }
 
   dndFetch = async (urlAppend, method, body) => {
@@ -45,7 +44,8 @@ class App extends Component {
       this.getChars(page, recCharsNames);
     }
     const charsObjects = await Promise.all(allCharsNames.map((charName) => this.getChar(charName)));
-    this.setState ({chars: charsObjects});
+    const aliveChars = charsObjects.filter(char => char.hitPoints !== 0)
+    this.setState ({chars: aliveChars});
     return allCharsNames;
  }
 
@@ -54,64 +54,9 @@ class App extends Component {
     return charObject;
   }
 
-  charFight = async (attacker, defender) => {
-    const body = {defender: defender.name};
-    const bodyStr = JSON.stringify(body);
-    const response = await this.dndFetch (`characters/${attacker.name}/attack`, 'POST', bodyStr);
-    console.log(response);
-    alert(response.contents[2].tag + " " + response.contents[2].contents);
-    this.setState({attacker : response.contents[0], defender : response.contents[1]})
-
-  }
-
   removeChar = (charObject) => {
     const newCharsList = this.state.chars.filter(element => element !==charObject);
     this.setState({chars: newCharsList});
-  }
-
-  actionButton = () => {
-    let buttonText;
-    let buttonAction;
-    if (!this.state.attacker.name) {
-      buttonText = "Set Attacker";
-      buttonAction = () => {
-        this.setState({attacker: this.state.selectedChar});
-        this.removeChar(this.state.selectedChar);
-      };
-      
-    } else {
-      buttonText = "Set Defender";
-      buttonAction = () => {
-        this.setState({defender: this.state.selectedChar})          
-        this.removeChar(this.state.selectedChar)
-      };
-    }
-    return (
-      <button onClick={buttonAction}>{buttonText}</button>
-    )
-  }
-
-  resetButton = () => {
-    const handleClick = () => {
-      this.setState({attacker: {}, defender: {}})
-      this.getChars()
-    }
-    return (
-      <button onClick={handleClick}>Reset</button>
-    )
-  }
-
-  fightButton = () => {
-    const {attacker, defender} = this.state;
-    let handleClick;
-    if (attacker.name && defender.name){
-      handleClick = () => {this.charFight(attacker, defender)};
-    } else {
-      handleClick = () => {alert('Select Attacker AND Defender')};
-    }
-    return (
-      <button onClick={handleClick}>Fight</button>
-      )
   }
 
   charButtons = () => {
@@ -128,45 +73,185 @@ class App extends Component {
           </div>
         )
       })
-      return <div className="over box1">{displayChars}</div>
+      return <div className="over box box1">{displayChars}</div>
+    }
+  }
+
+  initializeSelectedChar = () => {
+    this.setState({selectedChar: {}})
+  }
+
+  actionButton = (player) => {
+    let buttonText;
+    let buttonAction;
+    if (player === "player1") {
+      buttonText = "Click to set player 1";
+      buttonAction = () => {
+        this.setState({character1: this.state.selectedChar});
+        this.removeChar(this.state.selectedChar);
+        this.initializeSelectedChar();
+      };
+      
+    } else {
+      buttonText = "Click to set player 2";
+      buttonAction = () => {
+        this.setState({
+          character2: this.state.selectedChar,
+          selectedChar: {}
+        })          
+        this.removeChar(this.state.selectedChar)
+        this.initializeSelectedChar();
+      };
+    }
+    return (
+      <button onClick={buttonAction}>{buttonText}</button>
+    )
+  }
+
+  charFight = async (attacker, defender) => {
+    const body = {defender: defender.name};
+    const bodyStr = JSON.stringify(body);
+    const response = await this.dndFetch (`characters/${attacker.name}/attack`, 'POST', bodyStr);
+    this.setState({response: response.contents})
+    if (response !== "CharacterDead") {
+      this.setState({
+        character1 : response.contents[0],
+        character2 : response.contents[1],})
+    }
+  }
+
+  fightButton = () => {
+    const {character1, character2} = this.state;
+    const handleClick = () => this.charFight(character1, character2);
+    return (
+      <button key="fight" onClick={handleClick}>Fight</button>
+    )
+  }
+
+  resetButton = () => {
+    const handleClick = () => {
+      this.setState({character1: {}, character2: {}, response: [], selectedChar: {}})
+      this.getChars()
+    }
+    return (
+      <button key="reset" onClick={handleClick}>Reset</button>
+    )
+  }
+
+  showResponse = () => {
+    const response = this.state.response;
+    if (response.length !== 0) {
+      console.log(response);
+      if (response[2].tag === "Missed") {
+        return <h2 key="response"> Missed </h2>;
+      } else if (response[2].tag === "Damaged") {
+        return <h2 key="response"> {`Damaged for ${response[2].contents} HP`} </h2>
+      } else if (response[2].tag === "Killed") {
+        return <h2 key="response"> {`${this.state.character2.name} was killed!`} </h2>
+      }
+    }
+    else {
+      return <h2 key="response">Start fight</h2>
+    }
+  }
+
+  creatCharButton = () => {
+    return <button key='create' onClick={() => {this.setState({route: "create"})}}> Create Character </button>;
+  }
+
+  setCard1Contents = () => {
+    const {selectedChar, character1, character2, route} = this.state;
+    if (route === "create") {
+      return ({
+        header: "Create",
+        content: <CreateChar setRoute={this.setRoute}/>
+      })
+    }
+    if (character1.name && character2.name){
+      return({
+        header: "Ready!",
+        content: [this.fightButton(), this.resetButton(), this.showResponse()]
+      })
+    } else if (!selectedChar.name) {
+      return({
+        header: "Select Character",
+        content: [<h3 key='text'> Choose from character on left</h3>, this.resetButton(), this.creatCharButton()]
+      })
+    } else {
+      return({
+        header: selectedChar.name,
+        content: [characterTable(selectedChar), this.resetButton()]
+      })
+    }
+  }
+
+  setCard2Contents = () => {
+    const {selectedChar, character1} = this.state;
+    if (!selectedChar.name && !character1.name) {
+      return({
+        header: "Player 1",
+        content: " "
+      })
+    } else if (!character1.name) {
+      return({
+        header: "Player 1",
+        content: this.actionButton("player1")
+      })
+
+    } else {
+      return({
+        header: character1.name,
+        content: characterTable(this.state.character1)
+      })
+    }
+  }
+
+  setCard3Contents = () => {
+    const {selectedChar, character2} = this.state;
+    if (!selectedChar.name && !character2.name) {
+      return({
+        header: "Player 2",
+        content: " "
+      })
+    } else if (!this.state.character2.name) {
+      return({
+        header: "Player 2",
+        content: this.actionButton("player2")
+      })
+
+    } else {
+      return({
+        header: this.state.character2.name,
+        content: characterTable(this.state.character2)
+      })
     }
   }
 
   setRoute = (route) => {
     this.setState({route: route});
+    this.getChars();
   }
 
   render() {
-    if (this.state.route === 'home') {
-      return (
+    return (
       <div className="topDiv">
         <div className="header">
           <h1>DnD App</h1>
         </div>
         <div className ='gridContainer'>
           {this.charButtons()}
-          <CharacterTable className="box2" selectedChar={this.state.selectedChar} altText="Select a character" />       
-          <div className="box3">
-            <div>
-              {'Attacker is: ' + this.state.attacker.name + " / HP: " +this.state.attacker.hitPoints}
-            </div>
-            <div>
-              {'Defender is: ' + this.state.defender.name + " / HP: " +this.state.defender.hitPoints}
-            </div>
+          <div className=" box box2">
+            <Card contents={this.setCard1Contents()} />  
           </div>
-          <div className="box4">
-            <div>{this.actionButton()}</div>
-            <div>{this.resetButton()}</div>
-            <div>{this.fightButton()}</div>
+          <div className="box box3">
+            <Card contents={this.setCard2Contents()} />
+          </div>
+          <div className="box box4">
+            <Card contents={this.setCard3Contents()} />
           </div>  
         </div>
       </div>
-      )
-    } else {
-      return (
-        <CreateChar setRoute={this.setRoute} />
-      )
-    } 
+    ) 
   }   
 }
 
