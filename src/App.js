@@ -14,6 +14,7 @@ class App extends Component {
       character1: {},
       character2: {},
       response: [],
+      turn: 0
     }
   }
 
@@ -108,10 +109,17 @@ class App extends Component {
     )
   }
 
-  charFight = async (attacker, defender) => {
-    const body = {defender: defender.name};
-    const bodyStr = JSON.stringify(body);
-    const response = await this.dndFetch (`characters/${attacker.name}/attack`, 'POST', bodyStr);
+  charFight = async (player1, player2) => {
+    const turn = this.state.turn;
+    const defender = (turn % 2 === 0)
+      ? JSON.stringify({defender : player2.name})
+      : JSON.stringify({defender : player1.name});
+    const attacker = (turn % 2 === 0)
+      ? player1.name
+      : player2.name;
+    console.log(`Attacker: ${attacker}, Defender: ${defender}`)
+    const response = await this.dndFetch (`characters/${attacker}/attack`, 'POST', defender);
+    this.setState({turn : turn + 1})
     this.setState({response: response.contents})
     if (response !== "CharacterDead") {
       this.setState({
@@ -120,9 +128,25 @@ class App extends Component {
     }
   }
 
+  charFight2 = async (attacker, defender, attIndex, defIndex) => {
+    const turn = this.state.turn;
+    const reqBody = JSON.stringify({defender : defender.name});
+    const reqUrlSuffix = attacker.name;
+    const response = await this.dndFetch (`characters/${reqUrlSuffix}/attack`, 'POST', reqBody);
+    this.setState({turn : turn + 1})
+    this.setState({response: response.contents})
+    if (response !== "CharacterDead") {
+      this.setState({
+        character1 : response.contents[attIndex],
+        character2 : response.contents[defIndex],})
+    }
+  }  
+
   fightButton = () => {
-    const {character1, character2} = this.state;
-    const handleClick = () => this.charFight(character1, character2);
+    const {character1, character2, turn} = this.state;
+    const handleClick = () => (turn % 2 ===0)
+      ? this.charFight2(character1, character2, 0, 1)
+      : this.charFight2(character2, character1, 1, 0);
     return (
       <button key="fight" onClick={handleClick}>Fight</button>
     )
@@ -138,10 +162,16 @@ class App extends Component {
     )
   }
 
+  whosTurn = () => {
+    const text = (this.state.turn % 2 === 0)
+      ? <h2 key = "turn">Next attack: Player 1</h2>
+      : <h2 key = "turn">Next attack: Player 2</h2>;
+    return text;
+  }
+
   showResponse = () => {
     const response = this.state.response;
     if (response.length !== 0) {
-      console.log(response);
       if (response[2].tag === "Missed") {
         return <h2 key="response"> Missed </h2>;
       } else if (response[2].tag === "Damaged") {
@@ -170,7 +200,7 @@ class App extends Component {
     if (character1.name && character2.name){
       return({
         header: "Ready!",
-        content: [this.fightButton(), this.resetButton(), this.showResponse()]
+        content: [this.whosTurn(), this.fightButton(), this.resetButton(), this.showResponse()]
       })
     } else if (!selectedChar.name) {
       return({
